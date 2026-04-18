@@ -43,7 +43,6 @@ export default function Home() {
             
             {user ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">{user.name}</span>
                 {user.role === "admin" && (
                   <button
                     onClick={() => setLocation("/admin")}
@@ -126,7 +125,7 @@ export default function Home() {
               <div className="absolute inset-0 border-2 border-accent opacity-30"></div>
               <div className="text-center">
                 <div className="text-6xl text-accent opacity-20 mb-4">✦</div>
-                <p className="text-accent text-sm tracking-widest">ESTABLISHED 2024</p>
+                <p className="text-accent text-sm tracking-widest">ESTABLISHED 2026</p>
               </div>
             </div>
           </div>

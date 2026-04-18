@@ -43,3 +43,10 @@
 
 ## Deployment
 - [x] Final checkpoint and project delivery
+
+
+## Additional Refinements
+- [x] Populate database with sample products and categories
+- [x] Update year from 2024 to 2026 in homepage
+- [x] Remove user name from navigation display
+- [x] Verify all pages work without manual edits
