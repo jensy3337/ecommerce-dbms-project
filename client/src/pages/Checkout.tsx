@@ -13,10 +13,17 @@ export default function Checkout() {
   const [shippingAddress, setShippingAddress] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const { data: cartItems = [] } = trpc.cart.getItems.useQuery();
+  const {
+    data: cartItems = [],
+    isLoading: isCartLoading,
+    isError: isCartError,
+    error: cartError,
+  } = trpc.cart.getItems.useQuery();
   const createOrderMutation = trpc.orders.create.useMutation();
 
-  const subtotal = cartItems.reduce((sum, item) => {
+  const validCartItems = cartItems.filter((item) => item.product && item.quantity > 0);
+
+  const subtotal = validCartItems.reduce((sum, item) => {
     return sum + (parseFloat(item.product?.price || "0") * item.quantity);
   }, 0);
 
@@ -29,7 +36,7 @@ export default function Checkout() {
       return;
     }
 
-    if (cartItems.length === 0) {
+    if (validCartItems.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
@@ -38,7 +45,7 @@ export default function Checkout() {
 
     try {
       const result = await createOrderMutation.mutateAsync({
-        items: cartItems.map(item => ({
+        items: validCartItems.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
@@ -79,7 +86,53 @@ export default function Checkout() {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (isCartLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container py-12">
+          <button
+            onClick={() => setLocation("/cart")}
+            className="flex items-center gap-2 text-accent hover:text-accent-foreground transition mb-8"
+          >
+            <ChevronLeft size={20} />
+            Back to Cart
+          </button>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading your checkout details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCartError) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container py-12">
+          <button
+            onClick={() => setLocation("/cart")}
+            className="flex items-center gap-2 text-accent hover:text-accent-foreground transition mb-8"
+          >
+            <ChevronLeft size={20} />
+            Back to Cart
+          </button>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">
+              {cartError?.message || "Unable to load your cart for checkout."}
+            </p>
+            <Button
+              onClick={() => setLocation("/cart")}
+              className="bg-accent text-accent-foreground hover:opacity-90"
+            >
+              Return to Cart
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (validCartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <div className="container py-12">
@@ -168,7 +221,7 @@ export default function Checkout() {
               <h2 className="text-2xl font-bold text-accent mb-6">ORDER ITEMS</h2>
 
               <div className="space-y-4">
-                {cartItems.map((item) => (
+                {validCartItems.map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between py-4 border-b border-accent last:border-b-0"
@@ -224,10 +277,10 @@ export default function Checkout() {
 
               <Button
                 onClick={handlePlaceOrder}
-                disabled={isProcessing || !shippingAddress.trim()}
+                disabled={isProcessing || createOrderMutation.isPending || !shippingAddress.trim()}
                 className="w-full bg-accent text-accent-foreground hover:opacity-90 py-3 text-base mb-3"
               >
-                {isProcessing ? "Processing..." : "Place Order"}
+                {isProcessing || createOrderMutation.isPending ? "Processing..." : "Place Order"}
               </Button>
 
               <Button
