@@ -164,8 +164,8 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        // Calculate total and validate stock
-        let totalAmount = 0;
+        // Calculate subtotal and validate stock
+        let subtotal = 0;
         const orderItems: Array<{ productId: number; quantity: number; price: string }> = [];
 
         for (const item of input.items) {
@@ -180,7 +180,7 @@ export const appRouter = router({
             });
           }
           const itemTotal = parseFloat(product.price) * item.quantity;
-          totalAmount += itemTotal;
+          subtotal += itemTotal;
           orderItems.push({
             productId: item.productId,
             quantity: item.quantity,
@@ -188,8 +188,11 @@ export const appRouter = router({
           });
         }
 
+        const taxAmount = subtotal * 0.1;
+        const totalAmount = subtotal + taxAmount;
+
         // Create order
-        const orderResult = await createOrder(ctx.user.id, totalAmount.toString(), input.shippingAddress);
+        const orderResult = await createOrder(ctx.user.id, totalAmount.toFixed(2), input.shippingAddress);
         if (!orderResult) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create order" });
         }
@@ -208,7 +211,7 @@ export const appRouter = router({
         // Clear user's cart
         await clearCart(ctx.user.id);
 
-        return { orderId, totalAmount };
+        return { orderId, subtotal, taxAmount, totalAmount };
       }),
 
     getHistory: protectedProcedure.query(async ({ ctx }) => {
