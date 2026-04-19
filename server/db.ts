@@ -100,9 +100,9 @@ export async function getUserById(id: number) {
 export async function getProducts(limit?: number, offset?: number) {
   const db = await getDb();
   if (!db) return [];
-  const query = db.select().from(products);
-  if (limit) query.limit(limit);
-  if (offset) query.offset(offset);
+  let query = db.select().from(products);
+  if (offset) query = query.offset(offset) as any;
+  if (limit) query = query.limit(limit) as any;
   return query;
 }
 
@@ -119,7 +119,7 @@ export async function getProductsByCategory(categoryId: number) {
   return db.select().from(products).where(eq(products.categoryId, categoryId));
 }
 
-export async function getFeaturedProducts(limit: number = 6) {
+export async function getFeaturedProducts(limit: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(products).where(eq(products.featured, 1)).limit(limit);
@@ -194,18 +194,49 @@ export async function clearCart(userId: number) {
 export async function createOrder(userId: number, totalAmount: string, shippingAddress: string, customerName?: string, customerEmail?: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.insert(orders).values({
-    userId,
-    totalAmount: totalAmount as any,
-    shippingAddress,
-    customerName,
-    customerEmail,
-    status: 'pending',
-  });
   
-  // Fetch the created order to get the ID
-  const createdOrder = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt)).limit(1);
-  return createdOrder.length > 0 ? createdOrder[0] : null;
+  try {
+    // Insert the order
+    const insertResult = await db.insert(orders).values({
+      userId,
+      totalAmount: totalAmount as any,
+      shippingAddress,
+      customerName,
+      customerEmail,
+      status: 'pending',
+    });
+    
+    // Extract insertId from the result
+    // Drizzle with mysql2 returns [rows, metadata] where metadata has insertId
+    let insertedId: number | null = null;
+    
+    if (Array.isArray(insertResult) && insertResult.length >= 2) {
+      const metadata = insertResult[1] as any;
+      if (metadata && typeof metadata.insertId === 'number') {
+        insertedId = metadata.insertId;
+      }
+    } else if (insertResult && typeof insertResult === 'object' && 'insertId' in insertResult) {
+      insertedId = (insertResult as any).insertId;
+    }
+    
+    if (!insertedId) {
+      console.error('[Database] Could not extract insertId from result:', JSON.stringify(insertResult));
+      return null;
+    }
+    
+    // Fetch the created order by ID to return the full object
+    const createdOrder = await db.select().from(orders).where(eq(orders.id, insertedId)).limit(1);
+    
+    if (createdOrder && createdOrder.length > 0) {
+      return createdOrder[0];
+    }
+    
+    console.error('[Database] Could not fetch created order with ID:', insertedId);
+    return null;
+  } catch (error) {
+    console.error('[Database] Error creating order:', error);
+    throw error;
+  }
 }
 
 export async function getOrdersByUser(userId: number) {

@@ -194,14 +194,23 @@ export const appRouter = router({
         const totalAmount = subtotal + taxAmount;
 
         // Create order
-        const orderResult = await createOrder(ctx.user.id, totalAmount.toFixed(2), input.shippingAddress, input.customerName, input.customerEmail);
+        let orderResult;
+        try {
+          orderResult = await createOrder(ctx.user.id, totalAmount.toFixed(2), input.shippingAddress, input.customerName, input.customerEmail);
+        } catch (error) {
+          console.error('[Orders] Error creating order:', error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create order" });
+        }
+        
         if (!orderResult) {
+          console.error('[Orders] Order result is null or undefined');
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create order" });
         }
 
         // Get the order ID from the result
-        const orderId = (orderResult as any).id;
+        const orderId = orderResult.id;
         if (!orderId) {
+          console.error('[Orders] Order result missing ID:', JSON.stringify(orderResult));
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get order ID" });
         }
 
