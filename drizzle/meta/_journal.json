@@ -15,6 +15,13 @@
       "when": 1776508709154,
       "tag": "0001_serious_rictor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776588470059,
+      "tag": "0002_round_whirlwind",
+      "breakpoints": true
     }
   ]
 }

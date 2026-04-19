@@ -160,6 +160,8 @@ export const appRouter = router({
       .input(
         z.object({
           items: z.array(z.object({ productId: z.number(), quantity: z.number() })),
+          customerName: z.string(),
+          customerEmail: z.string(),
           shippingAddress: z.string(),
         })
       )
@@ -192,13 +194,13 @@ export const appRouter = router({
         const totalAmount = subtotal + taxAmount;
 
         // Create order
-        const orderResult = await createOrder(ctx.user.id, totalAmount.toFixed(2), input.shippingAddress);
+        const orderResult = await createOrder(ctx.user.id, totalAmount.toFixed(2), input.shippingAddress, input.customerName, input.customerEmail);
         if (!orderResult) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create order" });
         }
 
         // Get the order ID from the result
-        const orderId = (orderResult as any).insertId || (orderResult as any)[0]?.id;
+        const orderId = (orderResult as any).id;
         if (!orderId) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get order ID" });
         }

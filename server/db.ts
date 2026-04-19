@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, products, categories, cart, orders, orderItems } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -191,16 +191,21 @@ export async function clearCart(userId: number) {
 }
 
 // Orders queries
-export async function createOrder(userId: number, totalAmount: string, shippingAddress: string) {
+export async function createOrder(userId: number, totalAmount: string, shippingAddress: string, customerName?: string, customerEmail?: string) {
   const db = await getDb();
   if (!db) return null;
   const result = await db.insert(orders).values({
     userId,
     totalAmount: totalAmount as any,
     shippingAddress,
+    customerName,
+    customerEmail,
     status: 'pending',
   });
-  return result;
+  
+  // Fetch the created order to get the ID
+  const createdOrder = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt)).limit(1);
+  return createdOrder.length > 0 ? createdOrder[0] : null;
 }
 
 export async function getOrdersByUser(userId: number) {

@@ -72,6 +72,8 @@ export type InsertCartItem = typeof cart.$inferInsert;
 export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  customerName: varchar("customerName", { length: 255 }),
+  customerEmail: varchar("customerEmail", { length: 320 }),
   status: mysqlEnum("status", ["pending", "processing", "completed", "cancelled"]).default("pending").notNull(),
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
   shippingAddress: text("shippingAddress"),

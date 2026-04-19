@@ -10,6 +10,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 export default function Checkout() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const [customerName, setCustomerName] = useState(user?.name || "");
+  const [customerEmail, setCustomerEmail] = useState(user?.email || "");
   const [shippingAddress, setShippingAddress] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -31,6 +33,16 @@ export default function Checkout() {
   const total = subtotal + tax;
 
   const handlePlaceOrder = async () => {
+    if (!customerName.trim()) {
+      toast.error("Please enter your name");
+      return;
+    }
+
+    if (!customerEmail.trim()) {
+      toast.error("Please enter your email");
+      return;
+    }
+
     if (!shippingAddress.trim()) {
       toast.error("Please enter a shipping address");
       return;
@@ -49,6 +61,8 @@ export default function Checkout() {
           productId: item.productId,
           quantity: item.quantity,
         })),
+        customerName,
+        customerEmail,
         shippingAddress,
       });
 
@@ -183,21 +197,23 @@ export default function Checkout() {
               <div className="space-y-6">
                 {/* Customer Info */}
                 <div>
-                  <label className="text-sm text-accent block mb-2">FULL NAME</label>
+                  <label className="text-sm text-accent block mb-2">FULL NAME *</label>
                   <Input
                     type="text"
-                    value={user.name || ""}
-                    disabled
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Enter your full name"
                     className="bg-input border-accent text-foreground"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm text-accent block mb-2">EMAIL</label>
+                  <label className="text-sm text-accent block mb-2">EMAIL *</label>
                   <Input
                     type="email"
-                    value={user.email || ""}
-                    disabled
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="Enter your email address"
                     className="bg-input border-accent text-foreground"
                   />
                 </div>

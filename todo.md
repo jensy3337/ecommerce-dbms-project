@@ -50,3 +50,9 @@
 - [x] Update year from 2024 to 2026 in homepage
 - [x] Remove user name from navigation display
 - [x] Verify all pages work without manual edits
+
+
+## Bug Fixes
+- [x] Fix checkout form - make name and email fields editable
+- [x] Fix order creation error - resolve "failed to get order id" issue
+- [x] Test complete checkout flow end-to-end
